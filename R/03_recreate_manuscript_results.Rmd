@@ -1,0 +1,74 @@
+---
+title: "Recreate original manuscript results"
+author: "shelley herbrich"
+date: "`r Sys.Date()`"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Overview
+
+# Librares and Data
+
+## Libraries
+
+```{r load_libs}
+
+library(here)
+library(RColorBrewer)
+library(wesanderson) #currently requires devtools install 3/22/18
+library(limma)
+
+```
+
+## Color Palette
+
+```{r color_palette}
+rcol <- c(wes_palette("Darjeeling1"), wes_palette("Darjeeling2"))
+```
+
+## Data
+
+```{r load_data}
+
+load("~/Desktop/test/results/ng_data.RData")
+
+```
+
+# Recreating manuscript results
+
+As per the manuscript 
+
+>Differential GE analysis was performed using the limma package. Specifically, Smyth’s moderated t-test was used with Benjamini–Hochberg multiple testing correction to compare gene expression profiles of the 138 LSC+ and 89 LSC− fractions. This resulted in a list of differentially expressed (DE) genes was obtained; 104 genes exhibited ≥ 2-fold expression level differences (adjusted P < 0.01).
+
+When we attempt to recreate these results, we obtain 145 unique genes. However, the fold-changes and p-values from our analysis track closely with those reported in Extended Data Table 1 of the paper. We also notice that the prior to the original analysis, data at the probe level was collapsed to the gene level by selecting the probe with the maximum expression across samples, a step we have not included here.
+
+
+```{r lm_fit}
+design <- matrix(1,nrow=ncol(dat),ncol=2)
+rownames(design) <- colnames(dat)
+colnames(design) <- c("LSC-","LSC+vsLSC-")
+design[which(sample_annot$lsc_status=="LSC-"),2] <- 0
+
+fit <- lmFit(dat, design)
+fit <- eBayes(fit)
+volcanoplot(fit,coef=2,main="LSC+ vs LSC-", col=rcol[1])
+
+manuscriptResults <- topTable(fit, coef="LSC+vsLSC-", number=50000, adjust="BH",sort.by="logFC",lfc=0)
+manuscriptResults <- manuscriptResults[order(manuscriptResults[,1],decreasing=TRUE),]
+manuscriptResults <- data.frame(geneID=unlist(probe_to_gene)[rownames(manuscriptResults)],manuscriptResults)
+
+manuscriptList <- manuscriptResults[which(manuscriptResults$adj.P.Val<0.01 & abs(manuscriptResults$logFC)>1),]
+manuscriptList[which(abs(manuscriptList$logFC)>1.5),c("geneID","logFC","adj.P.Val")]
+
+length(unique(manuscriptList[,"geneID"]))
+
+#actualList <- read.csv(here("data", "supplementData.csv"),stringsAsFactors = FALSE)
+actualList <- read.csv("~/Desktop/test/data/supplementData.csv",stringsAsFactors = FALSE)
+rownames(actualList) <- paste(actualList$ILMN,as.character(actualList$illuminaID),sep="_")
+plot(actualList$logFC,manuscriptResults[rownames(actualList),"logFC"],pch=21,bg="dodgerblue",xlab="reported fold changes",ylab="recreation of fold changes")
+abline(a=0,b=1,col="red")
+
+save(manuscriptList, manuscriptResults, actualList, file= here("results", "manuscript_results.RData"))
+```
