@@ -1,6 +1,6 @@
 ---
 title: "README"
-author: "Keith Baggerly"
+author: "shelley herbrich"
 date: "`r Sys.Date()`"
 output: 
   github_document:
