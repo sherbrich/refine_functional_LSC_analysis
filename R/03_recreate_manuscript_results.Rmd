@@ -32,7 +32,7 @@ rcol <- c(wes_palette("Darjeeling1"), wes_palette("Darjeeling2"))
 
 ```{r load_data}
 
-load("~/Desktop/test/results/ng_data.RData")
+load(here("results", "ng_data.RData"))
 
 ```
 
@@ -64,8 +64,7 @@ manuscriptList[which(abs(manuscriptList$logFC)>1.5),c("geneID","logFC","adj.P.Va
 
 length(unique(manuscriptList[,"geneID"]))
 
-#actualList <- read.csv(here("data", "supplementData.csv"),stringsAsFactors = FALSE)
-actualList <- read.csv("~/Desktop/test/data/supplementData.csv",stringsAsFactors = FALSE)
+actualList <- read.csv(here("data", "supplementData.csv"),stringsAsFactors = FALSE)
 rownames(actualList) <- paste(actualList$ILMN,as.character(actualList$illuminaID),sep="_")
 plot(actualList$logFC,manuscriptResults[rownames(actualList),"logFC"],pch=21,bg="dodgerblue",xlab="reported fold changes",ylab="recreation of fold changes")
 abline(a=0,b=1,col="red")
