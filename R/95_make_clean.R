@@ -7,7 +7,7 @@
 
 library(here)
 
-dirs_to_clean <- c("results", "data")
+dirs_to_clean <- c("results")
 
 for(i1 in 1:length(dirs_to_clean)){
   temp_file_list <- 
